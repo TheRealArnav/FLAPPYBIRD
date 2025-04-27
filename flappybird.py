@@ -1,10 +1,14 @@
 import pygame
 import time
 from pygame.locals import*
+import random
 pygame.init()
 pygame.font.init()
 
-screen = pygame.display.set_mode((864,936))
+WIDTH = 864
+HEIGHT = 936
+
+screen = pygame.display.set_mode((WIDTH,HEIGHT))
 
 #images
 ground = pygame.image.load("C:/Pygame2/images/flappybird/groundimg.png")
@@ -19,6 +23,36 @@ groundscroll = 0
 scrollspeed = 4
 flying = False
 Gameover = False
+gap = 120
+pipefrequency = 1500
+lastpipe = pygame.time.get_ticks() - pipefrequency
+
+
+
+
+
+
+class pipe(pygame.sprite.Sprite):
+    def __init__(self,x,y,position):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.image.load("C:/Pygame2/images/flappybird/pole.png")
+        self.rect = self.image.get_rect()
+
+        if position == 1:
+            self.rect.topleft = (x,y+(gap//2))
+        elif position == -1:
+            self.image = pygame.transform.flip(self.image,False,True)
+            self.rect.bottomleft = (x,y-(gap//2))
+    def update(self):
+        self.rect.x = self.rect.x - scrollspeed
+        if self.rect.right < 0:
+            self.kill()
+
+
+
+
+
+
 
 class Bird(pygame.sprite.Sprite):
     def __init__(self,x,y):
@@ -61,9 +95,9 @@ class Bird(pygame.sprite.Sprite):
                     self.index = 0
                 self.image = self.images[self.index]
 
-            self.image = pygame.transform.rotate(self.image,(self.vel * -2))
+            self.image = pygame.transform.rotate(self.images[self.index],(self.vel * -2))
         elif Gameover == True:
-            self.image = pygame.transform.rotate(self.image,(-90))
+            self.image = pygame.transform.rotate(self.images[self.index],(-90))
 
 
 
@@ -71,6 +105,9 @@ class Bird(pygame.sprite.Sprite):
 birdgroup = pygame.sprite.Group()
 bird = Bird(150,936//2)
 birdgroup.add(bird)
+
+polegroup = pygame.sprite.Group()
+
 
 
 
@@ -94,13 +131,25 @@ while run:
     
 
     birdgroup.draw(screen)
-    #pygame.display.flip() 
     birdgroup.update()
-    
+    #pygame.display.flip() 
+
+    TIME = pygame.time.get_ticks()
+    if TIME - lastpipe > pipefrequency:
+        pipeheight = random.randint(-100,100)  
+        bottompipe = pipe(WIDTH,HEIGHT//2+pipeheight,1)
+        toppipe = pipe(WIDTH,HEIGHT//2+pipeheight,-1)
+        polegroup.add(bottompipe)
+        polegroup.add(toppipe)
+        polegroup.draw(screen)
+
+    polegroup.update()  
+    pygame.display.update()
+
     for event in pygame.event.get():
         if event.type == QUIT:
             quit()
-        if event.type == pygame.MOUSEBUTTONDOWN and flying == False and Gameover == False:
+        if event.type == MOUSEBUTTONDOWN and flying == False and Gameover == False:
             flying = True
     pygame.display.update()
 
