@@ -132,6 +132,12 @@ def displayscore(score):
     displayed_score = scorefont.render(score,True,"white")
     screen.blit(displayed_score,(WIDTH//2,30))
 
+def resetgame():
+    global score
+    bird.rect.y = HEIGHT//2
+    score = 0
+    polegroup.empty()
+    displayscore(str(score))
 
 
 run = True
@@ -201,7 +207,10 @@ while run:
 
 
     if Gameover == True and flying == False:
-        restart.draw()
+        if restart.draw() == True:
+            Gameover = False
+            resetgame()
+        
 
 
 
