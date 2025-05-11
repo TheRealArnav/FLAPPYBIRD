@@ -26,9 +26,10 @@ Gameover = False
 gap = 120
 pipefrequency = 1500
 lastpipe = pygame.time.get_ticks() - pipefrequency
+score = 0
+pass_pipe = False
 
-
-
+restart = pygame.image.load("C:/Pygame2/images/flappybird/restart.png")
 
 
 
@@ -50,7 +51,22 @@ class pipe(pygame.sprite.Sprite):
 
 
 
+class Button(pygame.sprite.Sprite):
+    def __init__(self,x,y):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.image.load("C:/Pygame2/images/flappybird/restart.png")
+        self.rect = pygame.Rect(x,y,100,100)
+        self.rect.center = (x,y)
+    def draw(self):
+        action = False
 
+        pos = pygame.mouse.get_pos()
+        if self.rect.collidepoint(pos):
+            print (pos)
+            if pygame.mouse.get_pressed()[0] == 1:
+                action = True
+        screen.blit(self.image,(self.rect.x,self.rect.y))
+        return action
 
 
 
@@ -108,6 +124,13 @@ birdgroup.add(bird)
 
 polegroup = pygame.sprite.Group()
 
+scorefont = pygame.font.SysFont("Bauhaus 93",45)
+
+restart = Button(432,468)
+
+def displayscore(score):
+    displayed_score = scorefont.render(score,True,"white")
+    screen.blit(displayed_score,(WIDTH//2,30))
 
 
 
@@ -120,30 +143,44 @@ while run:
     clock.tick(fps)
     screen.blit(bg,(0,0))
     screen.blit(ground,(groundscroll,768))
-    if Gameover == False:
+
+
+    if Gameover == False and flying == True:
         groundscroll = groundscroll - scrollspeed
         if abs(groundscroll) > 35 and Gameover == False:
             groundscroll = 0
+
+        TIME = pygame.time.get_ticks()
+        if TIME - lastpipe > pipefrequency:
+            pipeheight = random.randint(-100,100)  
+            bottompipe = pipe(WIDTH,HEIGHT//2+pipeheight,1)
+            toppipe = pipe(WIDTH,HEIGHT//2+pipeheight,-1)
+            lastpipe = pygame.time.get_ticks()
+            polegroup.add(bottompipe)
+            polegroup.add(toppipe)
+            polegroup.draw(screen)
+
+    polegroup.update()
     if bird.rect.bottom > 768:
         Gameover = True
         flying = False
+
+    if pygame.sprite.groupcollide(birdgroup,polegroup,False,False) or bird.rect.top < 0:
+        Gameover = True
+        flying = False
+        velocity = 0
+        
 
     
 
     birdgroup.draw(screen)
     birdgroup.update()
+    polegroup.draw(screen)
+    polegroup.update()
+    
     #pygame.display.flip() 
 
-    TIME = pygame.time.get_ticks()
-    if TIME - lastpipe > pipefrequency:
-        pipeheight = random.randint(-100,100)  
-        bottompipe = pipe(WIDTH,HEIGHT//2+pipeheight,1)
-        toppipe = pipe(WIDTH,HEIGHT//2+pipeheight,-1)
-        polegroup.add(bottompipe)
-        polegroup.add(toppipe)
-        polegroup.draw(screen)
-
-    polegroup.update()  
+      
     pygame.display.update()
 
     for event in pygame.event.get():
@@ -151,5 +188,26 @@ while run:
             quit()
         if event.type == MOUSEBUTTONDOWN and flying == False and Gameover == False:
             flying = True
+
+   
+    if len(polegroup) > 0:
+        if birdgroup.sprites()[0].rect.left > polegroup.sprites()[0].rect.left and birdgroup.sprites()[0].rect.right < polegroup.sprites()[0].rect.right and pass_pipe == False:
+            pass_pipe = True
+        if pass_pipe == True:
+            if birdgroup.sprites()[0].rect.left > polegroup.sprites()[0].rect.right:
+                score = score + 1
+                pass_pipe = False
+    displayscore(str(score))
+
+
+    if Gameover == True and flying == False:
+        restart.draw()
+
+
+
+
+
+
+        
     pygame.display.update()
 
